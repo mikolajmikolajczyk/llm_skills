@@ -5,6 +5,21 @@ description: >
   Use when working with rad CLI, Radicle repos, patches (Radicle PRs),
   or Radicle issues. Auto-trigger on: rad commands, RID references,
   Radicle workflow questions, patch/issue management in Radicle repos.
+triggers:
+  - rad
+  - radicle
+  - rid
+  - "rad:"
+  - rad clone
+  - rad issue
+  - rad patch
+  - rad node
+  - rad auth
+  - rad sync
+  - cob
+  - seed node
+  - did:key
+min_trust: guest
 user-invocable: false
 allowed-tools: Bash
 ---
@@ -112,9 +127,14 @@ rad issue list --assigned <DID>  # Assigned to specific person
 ```
 rad issue open                                        # Opens $EDITOR
 rad issue open -t "Title" -d "Description"
-rad issue open -t "Title" -d "Description" --labels bug,urgent
+rad issue open -t "Title" -d "Description" --labels bug --labels urgent
 rad issue open -t "Title" -d "Description" --assignees <DID>
 ```
+
+> **CRITICAL — label syntax:** `--labels` takes ONE label per occurrence.
+> Repeat the flag for multiple labels. **Never** pass a comma-separated
+> list — `--labels bug,urgent` creates a single literal label
+> `"bug,urgent"`, not two labels. Same rule for `--assignees`.
 
 ### View
 ```
@@ -154,11 +174,15 @@ rad issue comment <ID> --edit <COMMENT_ID> -m "Edited text"
 
 ### Labels & assignees
 ```
-rad issue label <ID> -a bug -a urgent       # Add labels
+rad issue label <ID> -a bug -a urgent       # Add multiple — repeat -a per label
 rad issue label <ID> -d bug                 # Remove label
 rad issue assign <ID> -a <DID>              # Add assignee
 rad issue assign <ID> -d <DID>              # Remove assignee
 ```
+
+> **Same rule applies to `-a` / `-d`:** one label per flag occurrence.
+> `rad issue label <ID> -a "bug,urgent"` creates a literal `"bug,urgent"`
+> label. Always repeat `-a bug -a urgent`.
 
 ## Patches (Radicle PRs)
 
@@ -366,3 +390,4 @@ Optional — Radicle signs everything internally anyway.
 12. `rad .` is fastest way to check current repo's RID
 13. If `git pull` shows "Already up to date" but you expect changes, run `rad sync --fetch` first
 14. Tor connections: use `rad node connect <NID>@<onion>:8776` format
+15. **Label/assignee flags are repeated, not comma-joined.** `--labels a --labels b` and `-a a -a b`, never `--labels a,b` — the comma becomes part of the label string

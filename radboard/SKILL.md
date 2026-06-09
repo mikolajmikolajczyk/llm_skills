@@ -30,6 +30,19 @@ label and title conventions below.
 
 This skill assumes you can already drive `rad` (see the `radicle` skill).
 
+> **CRITICAL — label flag syntax:** `--labels` and `-a` take one label per
+> flag occurrence. Repeat the flag for multiple labels. **Comma-separated
+> lists create one literal label containing the commas, not multiple
+> labels.** Every example in this skill follows the repeat-the-flag form.
+>
+> ```bash
+> # CORRECT
+> rad issue label <ID> -a epic -a priority:high
+>
+> # WRONG — creates a single label literally named "epic,priority:high"
+> rad issue label <ID> -a "epic,priority:high"
+> ```
+
 ## TL;DR cheat sheet
 
 | Convention | Effect in radboard |
@@ -69,7 +82,8 @@ rad issue label <ID> -d state:triage           # remove old before adding new
 When opening an issue you want to land in a specific column from day one:
 
 ```bash
-rad issue open -t "Title" -d "Body" --labels state:in-progress,priority:high
+rad issue open -t "Title" -d "Body" \
+  --labels state:in-progress --labels priority:high
 ```
 
 ### `priority:critical|high|medium|low` — ordering + badge
@@ -252,7 +266,7 @@ For a brand-new project that should "just work" in radboard:
 2. **Open issues with state + priority from the start.**
    ```bash
    rad issue open -t "Add CSV export" -d "..." \
-     --labels state:triage,priority:medium,milestone:v0.1.0
+     --labels state:triage --labels priority:medium --labels milestone:v0.1.0
    ```
 3. **When you start work, move the card.**
    ```bash
