@@ -52,6 +52,8 @@ This skill assumes you can already drive `rad` (see the `radicle` skill).
 | `milestone:<name>` (prefix configurable) | Groups issues in Milestones view, progress bar |
 | `blocked:<hex7>` label | Renders a "blocked by #<hex7>" chip linking to that issue |
 | `blocked:<free-text>` label | Renders a non-link blocker chip (e.g. `blocked:awaiting-design`) |
+| `epic` label | Marks issue as a parent epic; card shows `epic N` badge (N = child count) |
+| `parent:<hex7>` label | Marks issue as child of `<hex7>`; card shows `↑ #<hex7>` chip linking to parent |
 | 7-char hex prefix of issue ID in patch title | Patch appears as indicator on that issue's card |
 | 7-char hex prefix in patch description | Same |
 | 7-char hex prefix in **commit subject** | Same — use this for multi-issue patches |
@@ -119,6 +121,71 @@ rad issue label <ID> -a priority:critical
 ```bash
 rad issue label <ID> -a milestone:v0.6.0
 ```
+
+### `epic` + `parent:<hex7>` — epic ↔ child grouping
+
+Two labels work together to model parent/child relationships:
+
+- **`epic`** (plain label, no value) — marks an issue as a parent epic.
+  The card shows a purple `epic N` pill where N is the count of loaded
+  children pointing at it. Detail view gets a "Children" section above
+  Comments listing every child as a clickable row.
+- **`parent:<hex7>`** where `<hex7>` is the 7-char prefix of the parent
+  epic's id — marks an issue as a child. The card shows a purple
+  `↑ #<hex7>` chip that clicks through to the epic. Detail view gets a
+  "Parent epic" section above Comments.
+
+If `<hex7>` doesn't match a loaded issue (parent in another repo,
+deleted, or typo), the chip renders **orange** instead of purple and
+becomes non-clickable. Same fallback as `blocked:<hex7>`.
+
+```bash
+# Mark issue d694f0c as an epic:
+rad issue label d694f0c -a epic
+
+# Mark issues 512347 and 513539 as children of d694f0c:
+rad issue label 5123471 -a parent:d694f0c
+rad issue label 513539e -a parent:d694f0c
+```
+
+#### Finding an epic and its children
+
+The epic itself is just an issue with the `epic` label. To list epics:
+
+```bash
+# All open epics in the current repo:
+rad issue list | grep -E "^.*epic[, ]"
+# Or in JSON form for scripting:
+rad issue list --format json | jq '.[] | select(.labels | index("epic"))'
+```
+
+To find children of a specific epic, search for the `parent:<hex7>`
+label (use the epic's first 7 hex chars):
+
+```bash
+EPIC=d694f0cabc...                              # full id
+PREFIX=${EPIC:0:7}                              # first 7 chars
+rad issue list --format json \
+  | jq --arg p "parent:$PREFIX" '.[] | select(.labels | index($p))'
+```
+
+For UI users: open the epic in the issue detail view — the "Children"
+section above Comments lists every child with status badges.
+
+#### Conventions
+
+- Children reference parents by **7-char hex prefix**, not the full id
+  — consistent with `blocked:<hex7>` and patch↔issue linking.
+- An issue can be **both** an epic and a child (the issue spec calls
+  nested epics out of scope, but the data model doesn't prevent it —
+  just don't expect nested rendering).
+- Removing the `epic` label from a parent does **not** strip
+  `parent:<hex7>` labels off the children. The children become
+  orphans (orange chip). Either remove the children's labels too, or
+  re-label something else as `epic` with the same prefix.
+- An epic's children can live in **any column**. There's no
+  cross-column nesting yet — children render at their own card
+  position with the upward chip.
 
 ### `blocked:<value>` — blocker chips and graph
 
@@ -303,7 +370,13 @@ up with zero extra configuration.
 6. Use `rad issue state --solved`, not `--closed`, for completed work.
 7. Closed/solved issues ignore lingering `state:*` labels — safe to
    leave the label in place after solving, but it has no effect.
-8. Don't bake `state:`, `priority:`, `milestone:`, or `blocked:`
-   prefixes into label names users will pick (e.g. don't name a regular
-   label `state-machine` — fine; `state:machine` — collides with the
-   dynamic-column logic).
+8. Don't bake `state:`, `priority:`, `milestone:`, `blocked:`,
+   `parent:`, or the bare `epic` label into label names users will
+   pick (e.g. don't name a regular label `state-machine` — fine;
+   `state:machine` — collides with the dynamic-column logic).
+9. `parent:<hex7>` uses the same 7-char hex convention as
+   `blocked:<hex7>` and patch↔issue linking. Mismatches render orange
+   and non-clickable — verify the prefix matches the epic's id.
+10. Removing the `epic` label from a parent does NOT clean up children's
+    `parent:*` labels. Either re-add `epic` or strip the children
+    manually with `rad issue label -d parent:<hex7>`.
