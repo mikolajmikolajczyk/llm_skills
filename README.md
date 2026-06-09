@@ -9,8 +9,8 @@ that can be loaded into an agent's context to give it domain expertise.
 A skill is a markdown file that teaches an LLM agent how to use a specific
 tool, platform, or workflow. Skills are designed to be:
 
-- **Portable** — works with any agent that supports markdown context injection
-  (Claude Code skills, custom agents, etc.)
+- **Portable** — follows the `.agents/skills` Agent Skills convention used by
+  compatible agents such as Claude Code and OpenAI Codex
 - **Composable** — install only what you need per project or globally
 - **Version-controlled** — skills evolve with the tools they describe
 
@@ -19,6 +19,7 @@ tool, platform, or workflow. Skills are designed to be:
 | Skill | Description |
 |-------|-------------|
 | [radicle](radicle/) | Radicle peer-to-peer code forge — issues, patches, sync, clone, identity |
+| [radboard](radboard/) | Radboard label conventions — state/priority/milestone/blocked labels, patch↔issue linking via commit subjects |
 
 ## Install
 
@@ -26,10 +27,10 @@ tool, platform, or workflow. Skills are designed to be:
 # Clone the repo
 git clone https://github.com/mikolajmikolajczyk/llm_skills.git
 
-# Install a skill globally (symlink into ~/.claude/skills/)
+# Install a skill globally (symlink into ~/.agents/skills/)
 ./llm_skills.sh install radicle --global
 
-# Install into a specific project
+# Install into a specific project (symlink into <project>/.agents/skills/)
 ./llm_skills.sh install radicle --project ~/src/my-project
 ```
 
