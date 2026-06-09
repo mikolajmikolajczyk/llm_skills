@@ -8,8 +8,8 @@ set -euo pipefail
 #   2. Remote repos cached in ~/.local/share/llm_skills/repos/
 #
 # Skills are installed as symlinks into:
-#   - ~/.claude/skills/<name>/         (global)
-#   - <project>/.claude/skills/<name>/ (project)
+#   - ~/.agents/skills/<name>/         (global)
+#   - <project>/.agents/skills/<name>/ (project)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CACHE_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/llm_skills/repos"
@@ -34,12 +34,12 @@ Commands:
   uninstall <skill> [target]    Remove installed skill symlink
   fetch <url>                   Clone/fetch remote skill repo into cache
   update                        Pull latest for all cached repos
-  sync [project-path]           Install skills from .claude/skillfile
+  sync [project-path]           Install skills from .agents/skillfile
   search <pattern>              Search skills by name/description
 
 Targets:
-  --global                      Install to ~/.claude/skills/ (default)
-  --project <path>              Install to <path>/.claude/skills/
+  --global                      Install to ~/.agents/skills/ (default)
+  --project <path>              Install to <path>/.agents/skills/
 
 Examples:
   llm_skills list
@@ -132,10 +132,12 @@ resolve_target() {
     local target_path="${2:-}"
 
     if [[ "$target_type" == "global" ]]; then
-        echo "$HOME/.claude/skills"
+        echo "$HOME/.agents/skills"
     elif [[ "$target_type" == "project" ]]; then
         [[ -n "$target_path" ]] || die "project path required"
-        echo "$target_path/.claude/skills"
+        echo "$target_path/.agents/skills"
+    else
+        die "unknown target: $target_type"
     fi
 }
 
@@ -254,8 +256,8 @@ update_all() {
 
 # --- Skillfile sync ---
 
-# .claude/skillfile format:
-#   <skill-name>  <git-url-or-rid>  [--project|--global]
+# .agents/skillfile format:
+#   <skill-name>  [git-url-or-rid]  [--project|--global]
 #
 # Example:
 #   radicle  https://github.com/user/llm_skills.git
@@ -263,7 +265,7 @@ update_all() {
 
 sync_skillfile() {
     local project_path="${1:-.}"
-    local skillfile="$project_path/.claude/skillfile"
+    local skillfile="$project_path/.agents/skillfile"
 
     [[ -f "$skillfile" ]] || die "no skillfile at $skillfile"
 
@@ -274,11 +276,26 @@ sync_skillfile() {
         [[ "$line" =~ ^[[:space:]]*# ]] && continue
         [[ -z "${line// /}" ]] && continue
 
-        local skill_name repo_url target_type
-        skill_name="$(echo "$line" | awk '{print $1}')"
-        repo_url="$(echo "$line" | awk '{print $2}')"
-        target_type="$(echo "$line" | awk '{print $3}')"
-        target_type="${target_type:---project}"
+        local skill_name repo_url target_type option
+        local -a fields
+        read -r -a fields <<< "$line"
+        skill_name="${fields[0]}"
+        repo_url=""
+        target_type="project"
+
+        for option in "${fields[@]:1}"; do
+            case "$option" in
+                --global) target_type="global" ;;
+                --project) target_type="project" ;;
+                *)
+                    if [[ -z "$repo_url" ]]; then
+                        repo_url="$option"
+                    else
+                        die "unknown option in skillfile for '$skill_name': $option"
+                    fi
+                    ;;
+            esac
+        done
 
         # Fetch repo if URL provided
         if [[ -n "$repo_url" ]]; then
@@ -286,7 +303,7 @@ sync_skillfile() {
         fi
 
         # Install skill
-        if [[ "$target_type" == "--global" ]]; then
+        if [[ "$target_type" == "global" ]]; then
             install_skill "$skill_name" "global"
         else
             install_skill "$skill_name" "project" "$project_path"

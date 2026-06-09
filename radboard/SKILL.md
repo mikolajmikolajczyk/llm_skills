@@ -54,6 +54,7 @@ This skill assumes you can already drive `rad` (see the `radicle` skill).
 | `blocked:<free-text>` label | Renders a non-link blocker chip (e.g. `blocked:awaiting-design`) |
 | `epic` label | Marks issue as a parent epic; card shows `epic N` badge (N = child count) |
 | `parent:<hex7>` label | Marks issue as child of `<hex7>`; card shows `↑ #<hex7>` chip linking to parent |
+| `good-first-issue` label | Card and issue row get a small 🌱 badge — friendly marker for newcomers |
 | 7-char hex prefix of issue ID in patch title | Patch appears as indicator on that issue's card |
 | 7-char hex prefix in patch description | Same |
 | 7-char hex prefix in **commit subject** | Same — use this for multi-issue patches |
@@ -186,6 +187,17 @@ section above Comments lists every child with status badges.
 - An epic's children can live in **any column**. There's no
   cross-column nesting yet — children render at their own card
   position with the upward chip.
+
+### `good-first-issue` — newcomer-friendly marker
+
+Add the bare label `good-first-issue` (also accepted: `good first issue`)
+to surface a small 🌱 leaf on the kanban card and the issues-list row.
+The label itself is hidden from the regular chip list so the badge
+stays the dominant visual signal.
+
+```bash
+rad issue label <ID> -a good-first-issue
+```
 
 ### `blocked:<value>` — blocker chips and graph
 
