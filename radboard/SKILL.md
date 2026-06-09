@@ -55,6 +55,7 @@ This skill assumes you can already drive `rad` (see the `radicle` skill).
 | `epic` label | Marks issue as a parent epic; card shows `epic N` badge (N = child count) |
 | `parent:<hex7>` label | Marks issue as child of `<hex7>`; card shows `↑ #<hex7>` chip linking to parent |
 | `good-first-issue` label | Card and issue row get a small 🌱 badge — friendly marker for newcomers |
+| 👍 / 👎 reactions on the root comment | Drive the "Most wanted" toggle in the Open kanban column (sorted by net score) |
 | 7-char hex prefix of issue ID in patch title | Patch appears as indicator on that issue's card |
 | 7-char hex prefix in patch description | Same |
 | 7-char hex prefix in **commit subject** | Same — use this for multi-issue patches |
@@ -190,14 +191,35 @@ section above Comments lists every child with status badges.
 
 ### `good-first-issue` — newcomer-friendly marker
 
-Add the bare label `good-first-issue` (also accepted: `good first issue`)
-to surface a small 🌱 leaf on the kanban card and the issues-list row.
-The label itself is hidden from the regular chip list so the badge
-stays the dominant visual signal.
+Add the bare label `good-first-issue` to surface a small 🌱 leaf on
+the kanban card and the issues-list row. The label itself is hidden
+from the regular chip list so the badge stays the dominant visual
+signal. (Radicle label names can't contain spaces — use the dashed
+form, not `good first issue`.)
 
 ```bash
 rad issue label <ID> -a good-first-issue
 ```
+
+### Reactions and the "Most wanted" toggle
+
+The Open kanban column has a `prio | 🔥` switcher in its header. The
+🔥 mode flattens the column and sorts cards by **net reactions** —
+👍 count on the issue's root comment minus 👎. Each card gets a
+`+N` / `-N` / `0` badge.
+
+To drive this signal from the CLI, react on the issue itself (not on
+its comments):
+
+```bash
+rad issue react <ID> :+1:
+rad issue react <ID> :-1:
+```
+
+Reactions are per-author; running the command again toggles your vote
+off. Counts depend on which peers your local node has synced with —
+two users on different parts of the network can see different
+rankings, so radboard surfaces a small caveat in the toggle.
 
 ### `blocked:<value>` — blocker chips and graph
 

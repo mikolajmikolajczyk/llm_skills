@@ -136,6 +136,11 @@ rad issue open -t "Title" -d "Description" --assignees <DID>
 > list — `--labels bug,urgent` creates a single literal label
 > `"bug,urgent"`, not two labels. Same rule for `--assignees`.
 
+> **CRITICAL — only delegates can apply labels.** A non-delegate calling
+> `rad issue open --labels …` (or `rad issue label -a …`) gets
+> `not authorized to apply Label`. Non-delegates must open issues
+> without labels and ask a delegate to label later.
+
 ### View
 ```
 rad issue show <ID>
@@ -294,7 +299,10 @@ rad clone <RID> <PATH>          # Clone to specific path
 rad clone <RID> --seed <NID>    # Clone from specific seed (REQUIRED for private repos)
 rad clone <RID> --scope all     # Follow all peers, not just delegates
 rad seed <RID>                  # Seed without checkout (like starring)
-rad seed <RID> --scope all      # Seed with all peers
+rad seed <RID> --scope all      # Seed with all peers — REQUIRED if you want
+                                # external contributors' COBs (issues/patches/
+                                # comments from non-delegates) to reach you.
+                                # Default `followed` scope only syncs delegates.
 rad unseed <RID>                # Stop seeding
 rad checkout <RID>              # Create working copy from already-seeded repo
 ```
