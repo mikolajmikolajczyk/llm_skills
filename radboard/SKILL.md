@@ -305,6 +305,67 @@ accidental matches: 7 consecutive hex chars in a path or random string
 will be treated as an issue prefix. Prefer the `(hex7)` or `[hex7]`
 form for clarity.
 
+## Naming conventions (branch, commit, patch)
+
+Radboard parses hex7 prefixes from branch names, commit subjects, and
+patch titles to link work to issues. Follow these formats so the board
+populates automatically.
+
+### Branch — `<hex7>-<short-slug>`
+
+```bash
+git switch -c abc1234-csv-export
+```
+
+Hex7 first, kebab-case slug after. No `feat/` or `fix/` prefix on
+branches — that belongs in commit subjects.
+
+### Patch title — `[<hex7>] <type>: <summary>`
+
+Single issue:
+
+```bash
+git push rad HEAD:refs/patches \
+  -o patch.message="[abc1234] feat: add csv export"
+```
+
+Multi-issue: clean title, hex7 in each commit subject instead.
+
+### Commit subjects — hex7 per commit for multi-issue patches
+
+Radboard scans every commit subject for hex7. Use one issue ID per
+commit subject when a patch resolves multiple issues:
+
+```
+fix: validate input bounds for 0d948aa
+feat: add csv export for 3ca544a
+docs: clarify retry semantics for e9f1c22
+```
+
+Patch title can stay clean (no hex7 needed when commits carry them).
+
+### Patch description — acceptance criteria as checklist
+
+Copy the issue's acceptance criteria into the patch description as a
+Markdown checklist. Reviewers tick boxes; radboard renders them in the
+patch detail view, keeping issue intent traceable through review.
+
+```
+## Acceptance criteria
+- [x] Export button in toolbar
+- [x] UTF-8 BOM for Excel compatibility
+- [ ] Unit tests for edge cases
+```
+
+### Closing — `--solved`, never `--closed`
+
+```bash
+rad issue state --solved <ID>
+```
+
+`--closed` = abandoned/won't-fix. `--solved` = merged as intended.
+Multi-issue patches: solve each issue separately.
+
 ## Issue state semantics (radicle gotcha worth repeating)
 
 Radboard maps Radicle issue states directly:
